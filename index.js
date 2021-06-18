@@ -20,8 +20,13 @@ farmer_storage_total ${size.total}`;
 }
 
 async function GetFarmerNodeID() {
-    const files = fs.readdirSync(FARMER_CONFIG)
     let output = '';
+    const folderExists = fs.existsSync(FARMER_CONFIG);
+
+    if (!folderExists) {
+        return output;
+    }
+    const files = fs.readdirSync(FARMER_CONFIG)
 
     await async.eachSeries(files, async (file, nextFile) => {
         const configPath = file;
@@ -46,7 +51,7 @@ async function GetFarmerNodeID() {
                 output += `farmer_contact_last_seen ${data.lastSeen}\n`;
                 output += `farmer_contact_space_available ${data.spaceAvailable}\n`;
                 nextFile();
-            }).catch((err) => nextFile());
+            }).catch(() => nextFile());
     })
 
     return output;

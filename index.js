@@ -35,7 +35,7 @@ async function GetFarmerNodeID() {
         output += `farmer_max_connections ${configContents.maxConnections}\n`;
         output += `farmer_offer_backoff_limit ${configContents.offerBackoffLimit}\n`;
         output += `farmer_storage_allocation ${configContents.storageAllocation}\n`;
-        output += await GetFarmerStorageMetric(configContents.storageAllocation);
+        output += await GetFarmerStorageMetric(configContents.storagePath);
 
         fetch('https://api.internxt.com/contacts/' + nodeID)
             .then(res => res.json())

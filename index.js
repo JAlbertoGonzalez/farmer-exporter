@@ -12,8 +12,8 @@ const FARMER_CONFIG = '/home/ubuntu/.xcore/configs'
 
 const app = express();
 
-async function GetFarmerStorageMetric() {
-    const size = diskusage.checkSync(FARMER_STORAGE);
+async function GetFarmerStorageMetric(path) {
+    const size = diskusage.checkSync(path || FARMER_STORAGE);
     return `farmer_storage_available ${size.available}\n\
 farmer_storage_free ${size.free}\n\
 farmer_storage_total ${size.total}`;
@@ -23,7 +23,7 @@ async function GetFarmerNodeID() {
     const files = fs.readdirSync(FARMER_CONFIG)
     let output = '';
 
-    await async.eachSeries(files, (file, nextFile) => {
+    await async.eachSeries(files, async (file, nextFile) => {
         const configPath = file;
         const nodeID = file.match(/^([a-z0-9]{40})\.json$/)[1]
         const configContents = HJSON.parse(fs.readFileSync(path.join(FARMER_CONFIG, configPath)).toString());
@@ -35,6 +35,7 @@ async function GetFarmerNodeID() {
         output += `farmer_max_connections ${configContents.maxConnections}\n`;
         output += `farmer_offer_backoff_limit ${configContents.offerBackoffLimit}\n`;
         output += `farmer_storage_allocation ${configContents.storageAllocation}\n`;
+        output += await GetFarmerStorageMetric(configContents.storageAllocation);
 
         console.log('---', nodeID)
 
@@ -56,8 +57,7 @@ async function GetFarmerNodeID() {
 app.get('/metrics', (req, res) => {
 
     Promise.all([
-        GetFarmerNodeID(),
-        GetFarmerStorageMetric()
+        GetFarmerNodeID()
     ]).then(result => {
         result.forEach(line => res.write(line))
     }).then(() => {

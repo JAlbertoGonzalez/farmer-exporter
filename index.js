@@ -47,7 +47,7 @@ async function GetFarmerNodeID() {
                 output += `farmer_contact_last_seen ${data.lastSeen}\n`;
                 output += `farmer_contact_space_available ${data.spaceAvailable}\n`;
                 nextFile();
-            }).catch((err) => nextFile(err));
+            }).catch((err) => nextFile());
     })
 
     return output;
@@ -61,6 +61,7 @@ app.get('/metrics', (req, res) => {
     ]).then(result => {
         result.forEach(line => res.write(line))
     }).then(() => {
+        res.status(200);
         res.end();
     })
 

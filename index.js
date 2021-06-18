@@ -7,8 +7,8 @@ const HJSON = require('hjson')
 const fetch = require('node-fetch')
 const async = require('async')
 
-const FARMER_STORAGE = '/home/tack/.xcore/shares'
-const FARMER_CONFIG = '/home/tack/.xcore/configs'
+const FARMER_STORAGE = '/home/ubuntu/.xcore/shares'
+const FARMER_CONFIG = '/home/ubuntu/.xcore/configs'
 
 const app = express();
 

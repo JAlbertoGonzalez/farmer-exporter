@@ -37,8 +37,6 @@ async function GetFarmerNodeID() {
         output += `farmer_storage_allocation ${configContents.storageAllocation}\n`;
         output += await GetFarmerStorageMetric(configContents.storageAllocation);
 
-        console.log('---', nodeID)
-
         fetch('https://api.internxt.com/contacts/' + nodeID)
             .then(res => res.json())
             .then((data) => {

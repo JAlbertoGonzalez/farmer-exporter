@@ -15,6 +15,7 @@
     "dotenv": "^10.0.0",
     "express": "^4.17.1",
     "hjson": "^3.2.2",
+    "memory-cache": "^0.2.0",
     "node-fetch": "^2.6.1"
   }
 }

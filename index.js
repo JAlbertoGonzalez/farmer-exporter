@@ -7,6 +7,7 @@ const HJSON = require('hjson')
 const fetch = require('node-fetch')
 const async = require('async')
 const memoryCache = require('memory-cache')
+const bytes = require('bytes');
 
 const FARMER_STORAGE = '/home/ubuntu/.xcore/shares'
 const FARMER_CONFIG = '/home/ubuntu/.xcore/configs'
@@ -15,7 +16,11 @@ const app = express();
 
 async function GetFarmerStorageMetric(path) {
     const size = diskusage.checkSync(path || FARMER_STORAGE);
-    return `farmer_storage{available="${size.available}",free="${size.free}",total="${size.total}"} 1\n`;
+    let output = ``
+    output += `farmer_storage_available ${size.available}\n`;
+    output += `farmer_storage_free ${size.free}\n`;
+    output += `farmer_storage_total ${size.total}\n`;
+    return output;
 }
 
 async function GetFarmerNodeID() {
@@ -35,18 +40,22 @@ async function GetFarmerNodeID() {
 wallet="${configContents.paymentAddress}",\
 address="${configContents.rpcAddress}",\
 port="${configContents.rpcPort}",\
-max_connections="${configContents.maxConnections}",\
-farmer_offer_backoff_limit="${configContents.offerBackoffLimit}",\
 farmer_storage_allocation="${configContents.storageAllocation}"}\
- 1\n`
+ 1\n\
+farmer_port ${configContents.rpcPort}\n\
+farmer_max_connections ${configContents.maxConnections}\n\
+farmer_offer_backoff_limit ${configContents.offerBackoffLimit}\n\
+farmer_storage_allocation_bytes ${bytes(configContents.storageAllocation)}\n`
         output += await GetFarmerStorageMetric(configContents.storagePath);
 
         await fetch('https://api.internxt.com/contacts/' + nodeID)
             .then(res => res.json())
             .then((data) => {
-                output += `farmer_contact{reputation="${data.reputation}",response_time="${data.responseTime}",timeout_rate="${data.timeoutRate}",last_seen="${data.lastSeen}",space_available="${data.spaceAvailable}"} 1\n`;
+                output += `farmer_contact{last_seen="${data.lastSeen}"} 1\n`;
                 output += `farmer_contact_reputation ${data.reputation}\n`;
                 output += `farmer_contact_response_time ${data.responseTime}\n`;
+                output += `farmer_contact_timeout_rate ${data.timeoutRate}\n`;
+                output += `farmer_space_available ${data.spaceAvailable === 'true' ? 1 : 0}\n`;
                 return output;
             })
     })

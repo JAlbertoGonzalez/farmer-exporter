@@ -8,14 +8,15 @@ const fetch = require('node-fetch')
 const async = require('async')
 const memoryCache = require('memory-cache')
 const bytes = require('bytes');
+const activeConnections = require('./active_connections')
 
 const FARMER_STORAGE = '/home/ubuntu/.xcore/shares'
 const FARMER_CONFIG = '/home/ubuntu/.xcore/configs'
 
 const app = express();
 
-async function GetFarmerStorageMetric(path) {
-    const size = diskusage.checkSync(path || FARMER_STORAGE);
+async function GetFarmerStorageMetric(storagePath) {
+    const size = diskusage.checkSync(path.join(storagePath || FARMER_STORAGE, 'sharddata.kfs'));
     let output = ``
     output += `farmer_storage_available ${size.available}\n`;
     output += `farmer_storage_free ${size.free}\n`;
@@ -39,10 +40,10 @@ async function GetFarmerNodeID() {
         output += `farmer_info{nodeid="${nodeID}",\
 wallet="${configContents.paymentAddress}",\
 address="${configContents.rpcAddress}",\
-port="${configContents.rpcPort}",\
 farmer_storage_allocation="${configContents.storageAllocation}"}\
  1\n\
 farmer_port ${configContents.rpcPort}\n\
+farmer_active_connections ${(await activeConnections(configContents.rpcPort)+'').trim()}\n\
 farmer_max_connections ${configContents.maxConnections}\n\
 farmer_offer_backoff_limit ${configContents.offerBackoffLimit}\n\
 farmer_storage_allocation_bytes ${bytes(configContents.storageAllocation)}\n`

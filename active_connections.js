@@ -11,7 +11,7 @@ module.exports = function (port) {
         return resolve(-1);
       }
 
-      return resolve(stdout);
+      return resolve((stdout + '').trim());
     })
   });
 }

@@ -16,7 +16,7 @@ const FARMER_CONFIG = '/home/ubuntu/.xcore/configs'
 const app = express();
 
 async function GetFarmerStorageMetric(storagePath) {
-    const size = diskusage.checkSync(path.join(storagePath || FARMER_STORAGE, 'sharddata.kfs'));
+    const size = diskusage.checkSync(path.join(storagePath || FARMER_STORAGE));
     let output = ``
     output += `farmer_storage_available ${size.available}\n`;
     output += `farmer_storage_free ${size.free}\n`;
@@ -37,17 +37,19 @@ async function GetFarmerNodeID() {
         const nodeID = file.match(/^([a-z0-9]{40})\.json$/)[1]
         const configContents = HJSON.parse(fs.readFileSync(path.join(FARMER_CONFIG, configPath)).toString());
 
+        const currentConnections = await activeConnections(configContents.rpcPort);
         output += `farmer_info{nodeid="${nodeID}",\
 wallet="${configContents.paymentAddress}",\
 address="${configContents.rpcAddress}",\
 farmer_storage_allocation="${configContents.storageAllocation}"}\
  1\n\
 farmer_port ${configContents.rpcPort}\n\
-farmer_active_connections ${(await activeConnections(configContents.rpcPort)+'').trim()}\n\
+farmer_active_connections ${currentConnections}\n\
 farmer_max_connections ${configContents.maxConnections}\n\
 farmer_offer_backoff_limit ${configContents.offerBackoffLimit}\n\
 farmer_storage_allocation_bytes ${bytes(configContents.storageAllocation)}\n`
-        output += await GetFarmerStorageMetric(configContents.storagePath);
+        const storageMetric = await GetFarmerStorageMetric(configContents.storagePath);
+        output += storageMetric;
 
         await fetch('https://api.internxt.com/contacts/' + nodeID)
             .then(res => res.json())
@@ -58,7 +60,7 @@ farmer_storage_allocation_bytes ${bytes(configContents.storageAllocation)}\n`
                 output += `farmer_contact_timeout_rate ${data.timeoutRate}\n`;
                 output += `farmer_space_available ${data.spaceAvailable === 'true' ? 1 : 0}\n`;
                 return output;
-            })
+            }).catch(err => console.log)
     })
 
     return output;
@@ -90,6 +92,7 @@ app.get('/metrics', (req, res) => {
         res.write(result)
         res.end();
     }).catch(err => {
+        console.error(err);
         res.status(500)
     }).finally(() => {
         res.end();

@@ -10,16 +10,18 @@ yarn
 pm2 start index.js
 ```
 
-This script exposes a /metrics endpoint on port 9093.
+This script exposes a **/metrics** endpoint on port 9093.
 
 Now include this endpoint on Prometheus scrapping by editing:
 
+```bash
 nano /etc/prometheus/prometheus.yml
+```
 
 and add this lines:
 
 ```yaml
    - job_name: 'farmer_exporter'
-    static_configs:
+     static_configs:
       - targets: ['localhost:9093']
 ```
